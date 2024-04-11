@@ -92,7 +92,27 @@ io.on("connection", (socket) => {
   });
 });
 
-export default server;
+export default async ({ req, res }) => {
+  const { method, url, headers, body } = req;
+
+  // Convert the Appwrite Function request to a format that Express can handle
+  const request = new express.request({
+    method,
+    url,
+    headers,
+    body,
+  });
+
+  const response = new express.response();
+
+  // When the response is finished in Express, send it back via Appwrite Function's res
+  response.on("finish", () => {
+    res.status(response.statusCode).send(response._getData());
+  });
+
+  // Use Express to handle the request
+  app.handle(request, response);
+};
 
 // This is your Appwrite function
 // It's executed each time we get a request
