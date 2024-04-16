@@ -93,5 +93,5 @@ io.on("connection", (socket) => {
 });
 
 server.listen(PORT, () => {
-  conslog.log("Server is listning...");
+  console.log("Server is listning...");
 })
