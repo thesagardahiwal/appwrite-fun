@@ -1,7 +1,7 @@
 import express from "express";
 import http from "http";
 import {Server} from "socket.io";
-
+import cors from "cors";
 const app = express();
 const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
@@ -12,7 +12,7 @@ app.get("/", (req, res) => {
 
 const io = new Server(server, 
     {cors: 
-        {origin: "https://nexconnect-7361a.web.app", 
+        {origin: "http://localhost:5173", 
             methods: ["GET", "POST"], 
             credentials: true
         }
@@ -45,10 +45,10 @@ io.on("connection", (socket) => {
     io.to(id).emit("recieve-username", "Avtar" )
   });
   socket.on("group-message", (data) => {
-    const {message, id, username, roomId, time} = data;
+    const {message, id, username, roomId, time, download} = data;
     socket.join(roomId);
     io.to(roomId).emit('group-mess', 
-      {message: message, id: id, username: username, time: time}
+      {message: message, id: id, username: username, time: time, download: download}
     );
   });
   socket.on("share-file", (data) => {
@@ -90,6 +90,13 @@ io.on("connection", (socket) => {
   });
 });
 
+app.use(cors({
+  origin: "http://localhost:5173/", 
+  methods: ["GET", "POST"], 
+  credentials: true
+        
+}))
+
 server.listen(PORT, () => {
-  console.log("Server is listning ...");
+  console.log(`Server is listning on port ${PORT}`);
 })
