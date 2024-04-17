@@ -2,8 +2,11 @@ import express from "express";
 import http from "http";
 import {Server} from "socket.io";
 import cors from "cors";
+import { config } from "dotenv";
+config();
+
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 const server = http.createServer(app);
 
 app.get("/", (req, res) => {
@@ -12,7 +15,7 @@ app.get("/", (req, res) => {
 
 const io = new Server(server, 
     {cors: 
-        {origin: "http://localhost:5173", 
+        {origin: process.env.NEXCONNECT_URL, 
             methods: ["GET", "POST"], 
             credentials: true
         }
@@ -20,7 +23,8 @@ const io = new Server(server,
 );
 
 io.on("connection", (socket) => {
-  console.log("User Connected:", socket.id);
+  console.log("Socket is Connected:", socket.id);
+
   socket.on("create-room", (data) => {
     const {id, username, userId} = data;
     socket.join(id);
@@ -54,7 +58,6 @@ io.on("connection", (socket) => {
   socket.on("share-file", (data) => {
     const {filename, roomId} = data;
     socket.join(roomId);
-    console.log("File Shared!")
     io.to(roomId).emit("media-file", "New File shared!");
   });
   // AI - CHAT
@@ -66,11 +69,22 @@ io.on("connection", (socket) => {
     );
   });
   socket.on("logout", (data) => {
-    console.log("Logout Request:", data);
+    const { username, roomId } = data;
+    socket.join(roomId);
+    socket.broadcast.to(roomId).emit("member-logout", username);
   });
-  // 
+
+  // Owner-logout
+  socket.on("owner-logout", (data) => {
+    if (!data) return;
+    const {roomId} = data;
+    socket.join(roomId)
+    io.to(roomId).emit("owner-logout", true);
+
+  })
+
+  // kickout
   socket.on("kickout", (data) => {
-    console.log("kickout- Listner");
     const {roomId, user} = data;
     io.to(roomId).emit("kickout", {username: user});
   });
@@ -85,18 +99,19 @@ io.on("connection", (socket) => {
     socket.join(roomId);
     socket.to(roomId).emit("on-call", username);
   });
+
   socket.on("disconnect", () => {
     console.log("Socket Disconnected:", socket.id);
   });
 });
 
 app.use(cors({
-  origin: "http://localhost:5173/", 
+  origin: process.env.NEXCONNECT_URL, 
   methods: ["GET", "POST"], 
   credentials: true
         
 }))
 
 server.listen(PORT, () => {
-  console.log(`Server is listning on port ${PORT}`);
+  console.log(`Server is listning ... ${PORT}`);
 })
