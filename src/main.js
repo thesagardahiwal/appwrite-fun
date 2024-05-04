@@ -17,7 +17,7 @@ app.get("/", (req, res) => {
 
 const io = new Server(server, 
     {cors: 
-        {origin: process.env.LOCAL_URL, 
+        {origin: process.env.NEXCONNECT_URL, 
             methods: ["GET", "POST"], 
             credentials: true
         }
@@ -113,7 +113,7 @@ io.on("connection", (socket) => {
 });
 
 app.use(cors({
-  origin: process.env.LOCAL_URL, 
+  origin: process.env.NEXCONNECT_URL, 
   methods: ["GET", "POST"], 
   credentials: true
         
