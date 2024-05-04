@@ -3,11 +3,13 @@ import http from "http";
 import {Server} from "socket.io";
 import cors from "cors";
 import { config } from "dotenv";
+import { PeerServer } from "peer"
 config();
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT1;
 const server = http.createServer(app);
+const peerServer = PeerServer({ port: process.env.PORT2, path: '/' });
 
 app.get("/", (req, res) => {
   res.send("Welcome to Node")
@@ -15,7 +17,7 @@ app.get("/", (req, res) => {
 
 const io = new Server(server, 
     {cors: 
-        {origin: process.env.NEXCONNECT_URL, 
+        {origin: process.env.LOCAL_URL, 
             methods: ["GET", "POST"], 
             credentials: true
         }
@@ -23,7 +25,6 @@ const io = new Server(server,
 );
 
 io.on("connection", (socket) => {
-  console.log("Socket is Connected:", socket.id);
 
   socket.on("create-room", (data) => {
     const {id, username, userId} = data;
@@ -92,13 +93,19 @@ io.on("connection", (socket) => {
   socket.on("join-screen", (data) => {
     const {id, roomId} = data;
     socket.join(roomId);
-    socket.broadcast.to(roomId).emit("new-user-connection", id);
+    socket.to(roomId).emit("new-user-connection", id);
   });
+
   socket.on("calling", (data) => {
     const {roomId, username} = data;
     socket.join(roomId);
     socket.to(roomId).emit("on-call", username);
   });
+
+  socket.on("user-destroyed", ({id, roomId}) => {
+    socket.join(roomId)
+    io.to(roomId).emit("user-destroyed", id);
+  })
 
   socket.on("disconnect", () => {
     console.log("Socket Disconnected:", socket.id);
@@ -106,12 +113,12 @@ io.on("connection", (socket) => {
 });
 
 app.use(cors({
-  origin: process.env.NEXCONNECT_URL, 
+  origin: process.env.LOCAL_URL, 
   methods: ["GET", "POST"], 
   credentials: true
         
 }))
 
 server.listen(PORT, () => {
-  console.log(`Server is listning ... ${PORT}`);
+  console.log(`Server is listning on ports: ${PORT}, ${process.env.PORT2}`);
 })
