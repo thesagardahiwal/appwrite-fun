@@ -3,14 +3,11 @@ import http from "http";
 import {Server} from "socket.io";
 import cors from "cors";
 import { config } from "dotenv";
-import { PeerServer } from "peer"
 config();
 
 const app = express();
-const PORT1 = process.env.HTTP_PORT;
-const PORT2 = process.env.PEER_PORT;
+const PORT = process.env.PORT;
 const server = http.createServer(app);
-const peerServer = PeerServer({ port: PORT2, path: '/' });
 
 app.get("/", (req, res) => {
   res.send("Welcome to Node")
@@ -120,6 +117,6 @@ app.use(cors({
         
 }))
 
-server.listen(PORT1, () => {
-  console.log(`Server is listning on ports: ${PORT1}, ${PORT2}`);
+server.listen(PORT, () => {
+console.log(`Server is listning on port: ${PORT}`);
 })
